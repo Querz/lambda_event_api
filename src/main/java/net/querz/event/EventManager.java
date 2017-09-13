@@ -1,8 +1,5 @@
 package net.querz.event;
 
-import java.lang.reflect.Method;
-import java.util.*;
-
 public class EventManager {
 
 	private EventTree events;
@@ -11,28 +8,16 @@ public class EventManager {
 		events = new EventTree();
 	}
 
-	public void registerEvents(Listener listener) {
-		for (Method method : listener.getClass().getMethods()) {
-			if (method.isAnnotationPresent(EventHandler.class)
-					&& method.getParameterCount() == 1
-					&& Event.class.isAssignableFrom(method.getParameterTypes()[0])) {
-				events.add(method.getParameterTypes()[0], new EventMethod(listener, method));
-			}
-		}
+	public <T extends Event> EventFunction<T> registerEvent(FIEventFunction<T> function, Class<T> eventClass, int priority) {
+		return events.add(function, eventClass, priority);
 	}
 
-	public void unregisterEvents(Listener listener) {
-		for (Method method : listener.getClass().getMethods()) {
-			if (method.isAnnotationPresent(EventHandler.class)
-					&& method.getParameterCount() == 1
-					&& Event.class.isAssignableFrom(method.getParameterTypes()[0])) {
-				events.remove(method.getParameterTypes()[0], method);
-			}
-		}
+	public <T extends Event> void unregisterEvent(EventFunction<T> functionData) {
+		events.remove(functionData);
 	}
 
 	public void call(Event event) {
-		events.invoke(event);
+		events.execute(event);
 	}
 
 	@Override

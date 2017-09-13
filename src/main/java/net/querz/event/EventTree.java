@@ -1,6 +1,5 @@
 package net.querz.event;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 class EventTree {
@@ -8,48 +7,58 @@ class EventTree {
 	private TreeElement root;
 
 	EventTree() {
-		root = new EventTree.TreeElement(Event.class);
+		root = new TreeElement(Event.class);
 	}
 
-	void add(Class<?> eventClass, EventMethod method) {
-		Class<?> clazz = eventClass;
-		EventTree.TreeElement closest = getClosest(clazz);
+	<T extends Event> EventFunction<T> add(FIEventFunction<T> function, Class<T> eventClass, int priority) {
+		EventTree.TreeElement closest = getClosest(eventClass);
 		EventTree.TreeElement elem;
 		//get closest connection in tree
 		if (closest.children != null && closest.children.containsKey(eventClass)) {
 			elem = closest.children.get(eventClass);
 		} else {
-			elem = new EventTree.TreeElement(clazz);
+			elem = new EventTree.TreeElement(eventClass);
 		}
-		elem.methods.add(method);
-		Collections.sort(elem.methods);
+
+		EventFunction<T> fData = new EventFunction<>(function, eventClass, priority);
+		elem.functions.add(fData);
+		Collections.sort(elem.functions);
 
 		//create branch
+		Class<?> clazz = eventClass;
 		while ((clazz = clazz.getSuperclass()) != Event.class && clazz != closest.eventClass) {
 			EventTree.TreeElement parent = new EventTree.TreeElement(clazz);
 			parent.addChild(elem);
-			elem.parent = parent;
-			elem = parent;
+			elem = elem.parent = parent;
 		}
 		elem.parent = closest;
 		closest.addChild(elem);
+		return fData;
 	}
 
-	void remove(Class<?> eventClass, Method method) {
-		EventTree.TreeElement elem = getClosest(eventClass);
-		if (elem.children.get(eventClass) != null) {
-			elem.children.get(eventClass).removeMethod(method);
+	<T extends Event> void remove(EventFunction<T> functionData) {
+		EventTree.TreeElement elem = getClosest(functionData.eventClass);
+		if (elem.children.get(functionData.eventClass) != null) {
+			elem.children.get(functionData.eventClass).removeFunction(functionData);
 		}
 	}
 
 	//get leaf or closest element
-	private EventTree.TreeElement getClosest(Class<?> eventClass) {
+	//T can be any child of Event at this point
+	private <T extends Event> TreeElement getClosest(Class<T> eventClass) {
+
+		//? can be different types of Event
 		Stack<Class<?>> branch = new Stack<>();
 		Class<?> current = eventClass;
+
 		while ((current = current.getSuperclass()) != Event.class) {
 			branch.push(current);
 		}
-		EventTree.TreeElement elem = root;
+
+		//root elem will change its type
+		TreeElement elem = root;
+
+
 		while (!branch.isEmpty()) {
 			if (elem.children != null && elem.children.containsKey(branch.peek())) {
 				elem = elem.children.get(branch.pop());
@@ -60,10 +69,10 @@ class EventTree {
 		return elem;
 	}
 
-	void invoke(Event event) {
-		EventTree.TreeElement elem = getClosest(event.getClass());
+	void execute(Event event) {
+		TreeElement elem = getClosest(event.getClass());
 		if (elem.children != null && elem.children.containsKey(event.getClass())) {
-			elem.children.get(event.getClass()).invoke(event);
+			elem.children.get(event.getClass()).execute(event);
 		}
 	}
 
@@ -72,40 +81,41 @@ class EventTree {
 		return root.toString();
 	}
 
+	//each TreeElement has its own type
 	class TreeElement {
-		EventTree.TreeElement parent;
-		Map<Class<?>, EventTree.TreeElement> children;
+		TreeElement parent;
+		Map<Class<?>, TreeElement> children;
 		Class<?> eventClass;
-		List<EventMethod> methods;
+		List<EventFunction<?>> functions = new ArrayList<>();
 
 		TreeElement(Class<?> eventClass) {
 			this.eventClass = eventClass;
-			methods = new ArrayList<>();
 		}
 
-		boolean removeMethod(Method method) {
-			return methods.removeIf(r -> r.getMethod().equals(method));
+		void removeFunction(EventFunction function) {
+			functions.removeIf(r -> r.equals(function));
 		}
 
-		void addChild(EventTree.TreeElement elem) {
+		void addChild(TreeElement elem) {
 			if (children == null) {
 				children = new HashMap<>();
 			}
 			children.put(elem.eventClass, elem);
 		}
 
-		void invoke(Event event) {
-			methods.forEach(method -> invokeEventMethod(method, event));
+		void execute(Event event) {
+			functions.forEach(function -> executeEventFunction(function.function, event));
 			if (parent != null) {
-				parent.invoke(event);
+				parent.execute(event);
 			}
 		}
 
-		void invokeEventMethod(EventMethod method, Event event) {
+		@SuppressWarnings("unchecked")
+		<T extends Event> void executeEventFunction(FIEventFunction<T> function, Event event) {
 			if (event.isAsync()) {
-				new Thread(() -> method.invoke(event)).start();
+				new Thread(() -> function.execute((T) event)).start();
 			} else {
-				method.invoke(event);
+				function.execute((T) event);
 			}
 		}
 
@@ -128,13 +138,13 @@ class EventTree {
 
 			StringBuilder out = new StringBuilder(d + "parent=" + (parent == null ? "null" : parent.eventClass.getSimpleName())
 					+ "\n" + d + "eventClass=" + eventClass.getSimpleName()
-					+ "\n" + d + "methods=" + Arrays.toString(methods.toArray())
+					+ "\n" + d + "functions=" + Arrays.toString(functions.toArray())
 					+ "\n" + d + "children:");
 			if (children == null) {
 				out.append("null\n");
 			} else {
 				out.append("\n");
-				for (Map.Entry<Class<?>, EventTree.TreeElement> entry : children.entrySet()) {
+				for (Map.Entry<Class<?>, TreeElement> entry : children.entrySet()) {
 					out.append(entry.getValue().toString(depth + 1));
 				}
 			}
