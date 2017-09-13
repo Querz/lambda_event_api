@@ -1,4 +1,4 @@
-# basic_event_api
+# lambda_event_api
 A simple event api using java 8 lambdas and supporting inheritance
 ---
 ### Creating an Event
@@ -59,7 +59,12 @@ public class ExampleListener {
 ```java
 EventManager eventManager = new EventManager();
 ExampleListener l = new ExampleListener();
-eventManager.registerEvent(l::onEvent, ExampleEvent.class);
+EventFunction<ExampleEvent> function = eventManager.registerEvent(l::onEvent, ExampleEvent.class);
+```
+---
+### Unregistering an Event
+```java
+eventManager.unregisterEvent(function);
 ```
 ---
 ### Calling an Event
