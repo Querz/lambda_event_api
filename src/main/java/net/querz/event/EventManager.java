@@ -8,6 +8,10 @@ public class EventManager {
 		events = new EventTree();
 	}
 
+	public <T extends Event> EventFunction<T> registerEvent(FIEventFunction<T> function, Class<T> eventClass) {
+		return registerEvent(function, eventClass, 0);
+	}
+
 	public <T extends Event> EventFunction<T> registerEvent(FIEventFunction<T> function, Class<T> eventClass, int priority) {
 		return events.add(function, eventClass, priority);
 	}
