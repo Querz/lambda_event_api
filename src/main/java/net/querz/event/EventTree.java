@@ -14,7 +14,7 @@ class EventTree {
 	<T extends Event> EventFunction<T> add(Consumer<T> function, Class<T> eventClass, int priority) {
 		EventTree.TreeElement closest = getClosest(eventClass);
 		EventTree.TreeElement elem;
-		//get closest connection in tree
+
 		if (closest.children != null && closest.children.containsKey(eventClass)) {
 			elem = closest.children.get(eventClass);
 		} else {
@@ -24,8 +24,7 @@ class EventTree {
 		EventFunction<T> fData = new EventFunction<>(function, eventClass, priority);
 		elem.functions.add(fData);
 		Collections.sort(elem.functions);
-
-		//create branch
+		
 		Class<?> clazz = eventClass;
 		while ((clazz = clazz.getSuperclass()) != Event.class && clazz != closest.eventClass) {
 			EventTree.TreeElement parent = new EventTree.TreeElement(clazz);
@@ -44,11 +43,7 @@ class EventTree {
 		}
 	}
 
-	//get leaf or closest element
-	//T can be any child of Event at this point
 	private <T extends Event> TreeElement getClosest(Class<T> eventClass) {
-
-		//? can be different types of Event
 		Stack<Class<?>> branch = new Stack<>();
 		Class<?> current = eventClass;
 
@@ -56,9 +51,7 @@ class EventTree {
 			branch.push(current);
 		}
 
-		//root elem will change its type
 		TreeElement elem = root;
-
 
 		while (!branch.isEmpty()) {
 			if (elem.children != null && elem.children.containsKey(branch.peek())) {
@@ -82,7 +75,6 @@ class EventTree {
 		return root.toString();
 	}
 
-	//each TreeElement has its own type
 	class TreeElement {
 		TreeElement parent;
 		Map<Class<?>, TreeElement> children;
