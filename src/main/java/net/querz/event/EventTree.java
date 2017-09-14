@@ -24,7 +24,7 @@ class EventTree {
 		EventFunction<T> fData = new EventFunction<>(function, eventClass, priority);
 		elem.functions.add(fData);
 		Collections.sort(elem.functions);
-		
+
 		Class<?> clazz = eventClass;
 		while ((clazz = clazz.getSuperclass()) != Event.class && clazz != closest.eventClass) {
 			EventTree.TreeElement parent = new EventTree.TreeElement(clazz);
@@ -97,7 +97,12 @@ class EventTree {
 		}
 
 		void execute(Event event) {
-			functions.forEach(function -> executeEventFunction(function.function, event));
+			if (event.isAsync()) {
+				new Thread(() -> functions.forEach(function -> executeEventFunction(function.function, event))).start();
+			} else {
+				functions.forEach(function -> executeEventFunction(function.function, event));
+			}
+
 			if (parent != null) {
 				parent.execute(event);
 			}
@@ -105,11 +110,7 @@ class EventTree {
 
 		@SuppressWarnings("unchecked")
 		<T extends Event> void executeEventFunction(Consumer<T> function, Event event) {
-			if (event.isAsync()) {
-				new Thread(() -> function.accept((T) event)).start();
-			} else {
-				function.accept((T) event);
-			}
+			function.accept((T) event);
 		}
 
 		@Override
@@ -129,7 +130,8 @@ class EventTree {
 				d.append(" ");
 			}
 
-			StringBuilder out = new StringBuilder(d + "parent=" + (parent == null ? "null" : parent.eventClass.getSimpleName())
+			StringBuilder out = new StringBuilder(
+					d + "parent=" + (parent == null ? "null" : parent.eventClass.getSimpleName())
 					+ "\n" + d + "eventClass=" + eventClass.getSimpleName()
 					+ "\n" + d + "functions=" + Arrays.toString(functions.toArray())
 					+ "\n" + d + "children:");
