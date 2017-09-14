@@ -1,5 +1,6 @@
 # lambda_event_api
 A simple event api using java 8 lambdas and supporting inheritance
+
 ---
 ### Creating an Event
 ```java
@@ -85,3 +86,7 @@ If an Event inherits from another event, and functions for both events are regis
 functions will be called first (first child, then parent).
 Event functions are ordered by priority upon registration. The higher the priority, the later the function will be
 called. Execution order given by inheritance cannot be changed by the priority.
+
+---
+### Async Event
+An Event can be executed asynchronously. For this to work, a boolean of whether the Event is async or not has to be passed to Event when [creating an Event](#creating-an-event).
