@@ -1,11 +1,13 @@
 package net.querz.event;
 
+import java.util.function.Consumer;
+
 public class EventFunction<T extends Event> implements Comparable<EventFunction> {
-	FIEventFunction<T> function;
+	Consumer<T> function;
 	Class<? extends Event> eventClass;
 	private int priority;
 
-	EventFunction(FIEventFunction<T> function, Class<T> eventClass, int priority) {
+	EventFunction(Consumer<T> function, Class<T> eventClass, int priority) {
 		this.function = function;
 		this.eventClass = eventClass;
 		this.priority = priority;

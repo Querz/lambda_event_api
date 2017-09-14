@@ -1,6 +1,7 @@
 package net.querz.event;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 class EventTree {
 
@@ -10,7 +11,7 @@ class EventTree {
 		root = new TreeElement(Event.class);
 	}
 
-	<T extends Event> EventFunction<T> add(FIEventFunction<T> function, Class<T> eventClass, int priority) {
+	<T extends Event> EventFunction<T> add(Consumer<T> function, Class<T> eventClass, int priority) {
 		EventTree.TreeElement closest = getClosest(eventClass);
 		EventTree.TreeElement elem;
 		//get closest connection in tree
@@ -111,11 +112,11 @@ class EventTree {
 		}
 
 		@SuppressWarnings("unchecked")
-		<T extends Event> void executeEventFunction(FIEventFunction<T> function, Event event) {
+		<T extends Event> void executeEventFunction(Consumer<T> function, Event event) {
 			if (event.isAsync()) {
-				new Thread(() -> function.execute((T) event)).start();
+				new Thread(() -> function.accept((T) event)).start();
 			} else {
-				function.execute((T) event);
+				function.accept((T) event);
 			}
 		}
 
