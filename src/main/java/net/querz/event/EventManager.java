@@ -1,13 +1,28 @@
 package net.querz.event;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 public class EventManager {
 
 	private EventTree events;
+	private ExecutorService threadpool;
 
 	public EventManager() {
+		this(null);
+	}
+
+	public EventManager(ExecutorService threadpool) {
 		events = new EventTree();
+		if (threadpool == null) {
+			this.threadpool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> this.threadpool.shutdownNow()));
+		} else {
+			this.threadpool = threadpool;
+		}
 	}
 
 	public <T extends Event> EventFunction<T> registerEvent(Consumer<T> function, Class<T> eventClass) {
@@ -22,12 +37,32 @@ public class EventManager {
 		events.remove(functionData);
 	}
 
-	public void call(Event event) {
-		events.execute(event);
+
+	public Future<Boolean> call(Event event) {
+		if (event.isAsync()) {
+			return threadpool.submit(new FutureEvent<>(event));
+		} else {
+			events.execute(event);
+		}
+		return null;
 	}
 
 	@Override
 	public String toString() {
 		return events.toString();
+	}
+
+	class FutureEvent<T extends Event> implements Callable<Boolean> {
+		T event;
+
+		FutureEvent(T event) {
+			this.event = event;
+		}
+
+		@Override
+		public Boolean call() throws Exception {
+			events.execute(event);
+			return event instanceof Cancellable && ((Cancellable) event).isCancelled();
+		}
 	}
 }

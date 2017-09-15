@@ -97,12 +97,7 @@ class EventTree {
 		}
 
 		void execute(Event event) {
-			if (event.isAsync()) {
-				new Thread(() -> functions.forEach(function -> executeEventFunction(function.function, event))).start();
-			} else {
-				functions.forEach(function -> executeEventFunction(function.function, event));
-			}
-
+			functions.forEach(function -> executeEventFunction(function.function, event));
 			if (parent != null) {
 				parent.execute(event);
 			}
