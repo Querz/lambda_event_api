@@ -8,21 +8,16 @@ import java.util.function.Consumer;
 
 public class EventManager {
 
-	private EventTree events;
+	private EventTree events = new EventTree();
 	private ExecutorService threadpool;
 
 	public EventManager() {
-		this(null);
+		this.threadpool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> this.threadpool.shutdownNow()));
 	}
 
 	public EventManager(ExecutorService threadpool) {
-		events = new EventTree();
-		if (threadpool == null) {
-			this.threadpool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-			Runtime.getRuntime().addShutdownHook(new Thread(() -> this.threadpool.shutdownNow()));
-		} else {
-			this.threadpool = threadpool;
-		}
+		this.threadpool = threadpool;
 	}
 
 	public <T extends Event> EventFunction<T> registerEvent(Consumer<T> function, Class<T> eventClass) {
