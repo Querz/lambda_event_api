@@ -12,7 +12,7 @@ public class EventManager {
 	private ExecutorService threadpool;
 
 	public EventManager() {
-		this.threadpool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		this.threadpool = Executors.newCachedThreadPool();
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> this.threadpool.shutdownNow()));
 	}
 
