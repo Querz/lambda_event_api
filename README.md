@@ -1,5 +1,7 @@
 # lambda_event_api
-A simple event api using java 8 lambdas and supporting inheritance
+![Build Status](https://travis-ci.org/Querz/lambda_event_api.svg?branch=master)
+
+#### A simple event api using java 8 lambdas and supporting inheritance
 
 ---
 ### Creating an Event
