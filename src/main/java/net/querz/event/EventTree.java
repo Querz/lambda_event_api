@@ -85,7 +85,7 @@ class EventTree {
 			this.eventClass = eventClass;
 		}
 
-		void removeFunction(EventFunction function) {
+		<T extends Event> void removeFunction(EventFunction<T> function) {
 			functions.removeIf(r -> r.equals(function));
 		}
 
@@ -105,6 +105,7 @@ class EventTree {
 
 		@SuppressWarnings("unchecked")
 		<T extends Event> void executeEventFunction(Consumer<T> function, Event event) {
+			//this is ok, we made sure before that event is an instance of T
 			function.accept((T) event);
 		}
 

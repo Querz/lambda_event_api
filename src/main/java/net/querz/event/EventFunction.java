@@ -2,7 +2,7 @@ package net.querz.event;
 
 import java.util.function.Consumer;
 
-public class EventFunction<T extends Event> implements Comparable<EventFunction> {
+public class EventFunction<T extends Event> implements Comparable<EventFunction<? extends Event>> {
 	Consumer<T> function;
 	Class<? extends Event> eventClass;
 	private int priority;
@@ -19,7 +19,7 @@ public class EventFunction<T extends Event> implements Comparable<EventFunction>
 
 	//sort by priority
 	@Override
-	public int compareTo(EventFunction e) {
+	public int compareTo(EventFunction<? extends Event> e) {
 		return Integer.compare(priority, e.priority);
 	}
 
