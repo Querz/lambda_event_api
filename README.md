@@ -89,4 +89,4 @@ called. Execution order given by inheritance cannot be changed by the priority.
 
 ---
 ### Async Event
-An Event can be executed asynchronously. For this to work, a boolean of whether the Event is async or not has to be passed to Event when [creating an Event](#creating-an-event).
+An Event can be executed asynchronously. For this to work, a boolean of whether the Event is async or not has to be passed to Event when [creating an Event](#creating-an-event). If no ExecutorService has been given to the constructor of EventManager, it will automatically create a cached threadpool which is then used to execute an Event asynchronously. When using the automatically generated cached threadpool, the EventManager will terminate it automatically the moment the program exits.
